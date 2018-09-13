@@ -1,0 +1,4 @@
+*.iml
+.idea/
+*.yml
+!config.yml.dist
