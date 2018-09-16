@@ -1,29 +1,34 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"net/smtp"
 	"os"
+	"strings"
 )
 
 // Config struct contains the settings from the config file.
 type Config struct {
 	Containers []string
 	Enable     bool
+	Email      Email
 }
 
-// ContainerStatus struct contains the elements of docker ps
-type ContainerStatus struct {
-	Id      string
-	Image   string
-	Command string
-	Created string
-	Status  string
-	Port    string
-	Names   string
+// Email configuration structure
+type Email struct {
+	Enable    bool
+	Password  string
+	Username  string
+	Url       string
+	Sender    string
+	Recipient string
+	Hostname  string
 }
 
 // Load the config file into a Config struct object. If the config flag "-config" is not specified a default location
@@ -50,73 +55,68 @@ func LoadConfig() Config {
 	return config
 }
 
-/*func BuildContainerStatus(output string) []ContainerStatus {
-	lines := strings.Split(output, "\n")
-
-	// no running containers where found
-	if len(lines) <= 2 {
-		return []ContainerStatus{}
+// Loads the container information of all currently running containers.
+func LoadRunningContainers() []types.Container {
+	cli, err := client.NewClientWithOpts(client.WithVersion("1.38"))
+	if err != nil {
+		fmt.Println("Cloud not get docker cli. " + err.Error())
+		os.Exit(4)
 	}
 
-	for i := 1; i < len(lines) - 1; i++ {
-		ParseStatusString(lines[i])
+	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{})
+	if err != nil {
+		fmt.Println("Cloud not get all containers. " + err.Error())
+		os.Exit(5)
 	}
 
-	return []ContainerStatus{}
+	return containers
 }
 
-func ParseStatusString(line string) ContainerStatus {
-	containerStatus := ContainerStatus{}
-	inString := false
+// Checks if the containers of the configuration are running.
+func CheckContainers(config Config, containers []types.Container) []string {
+	notFoundContainers := make([]string, len(config.Containers))
+	copy(notFoundContainers, config.Containers)
 
-	attributeIndex := 0
-	attribute := ""
-	fmt.Println(line)
-	for pos, char := range line {
-		if pos == len(line) -1 {
-			containerStatus.Names = attribute
-		} else if char == '"' {
-			inString = !inString
-		} else if char == ' ' {
-			if inString {
-				attribute += string(char)
-			} else if len(attribute) != 0 {
-				switch attributeIndex {
-					case 0:
-						containerStatus.Id = attribute
-						break
-					case 1:
-						containerStatus.Image = attribute
-						break
-					case 2:
-						containerStatus.Command = attribute
-						break
-					case 3:
-						containerStatus.Created = attribute
-						break
-					case 4:
-						containerStatus.Status = attribute
-						break
-					case 5:
-						containerStatus.Port = attribute
-						break
-					default:
-						fmt.Println("Illegal attributeIndex reached")
-						os.Exit(5)
-				}
-
-				print("old attribute "+attribute+"\n")
-				attribute = ""
-				attributeIndex++
-			}
-		} else {
-			attribute += string(char)
+	for _, container := range containers {
+		for _, name := range container.Names {
+			notFoundContainers = remove(notFoundContainers, name)
 		}
 	}
 
-	fmt.Println(containerStatus)
-	return containerStatus
-}*/
+	return notFoundContainers
+}
+
+// Removes needle from haystack if needle is in haystack
+func remove(haystack []string, needle string) []string {
+	if needle[0] == '/' {
+		needle = needle[1:]
+	}
+
+	for pos, hay := range haystack {
+		if hay == needle {
+			return append(haystack[:pos], haystack[pos+1:]...)
+		}
+	}
+
+	return haystack
+}
+
+// Sends a mail with the not running containers. The email information are taken from config.
+func SendMail(config Config, missingContainers []string) {
+	text := "Some of your Docker containers might not be running:\n" + strings.Join(missingContainers, "\n")
+	msg := []byte("To: " + config.Email.Recipient + "\r\n" +
+		"Subject: SimpleDockerMonitoring warning!\r\n" +
+		"\r\n" + text)
+
+	auth := smtp.PlainAuth("", config.Email.Username, config.Email.Password, config.Email.Hostname)
+	err := smtp.SendMail(config.Email.Url, auth, config.Email.Sender, []string{config.Email.Recipient}, msg)
+	if err != nil {
+		fmt.Println("Cloud not send mail. " + err.Error())
+		os.Exit(7)
+	} else {
+		os.Exit(0)
+	}
+}
 
 func main() {
 	c := LoadConfig()
@@ -124,13 +124,9 @@ func main() {
 		os.Exit(0)
 	}
 
-	client, err := client.NewEnvClient()
-
-	/*
-		outputBytes, err := exec.Command("docker", "ps").Output()
-		if err != nil {
-			fmt.Println("Cloud not get running docker containers. Reason: "+err.Error())
-			os.Exit(4)
-		}
-		output := string(outputBytes)*/
+	containers := LoadRunningContainers()
+	missingContainers := CheckContainers(c, containers)
+	if len(missingContainers) > 0 && c.Email.Enable {
+		SendMail(c, missingContainers)
+	}
 }
