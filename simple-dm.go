@@ -101,9 +101,9 @@ func remove(haystack []string, needle string) []string {
 // Sends a mail with the not running containers. The email information are taken from config.
 func SendMail(config Config, missingContainers []string) {
 	password := ""
-	fmt.Println("config.Email.PasswordEnv: "+config.Email.PasswordEnv)
-	if config.Email.PasswordEnv != "" {
-		password = os.Getenv(config.Email.PasswordEnv)
+	fmt.Println("config.Email.PasswordEnv: "+config.Email.Passwordenv)
+	if config.Email.Passwordenv != "" {
+		password = os.Getenv(config.Email.Passwordenv)
 		fmt.Println("env: "+password)
 	} else {
 		password = config.Email.Password

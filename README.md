@@ -1,8 +1,8 @@
 # SimpleDockerMonitoring
-Using simple-dm you can simply monitor your running docker containers. You can run `simple-dm` as a cli tool and configure
-it via a simple yml file. You simply have to define of docker container names which are expected to run. If these docker
-containers are not running a e-mail will be send to a specified e-mail address with further information. To automate the
-monitoring simply create a cron job and run the `simple-dm` command.
+Using simple-dm you can simply monitor your running docker containers. You can run `simple-dm` as a cli tool and 
+configure it via a simple yml file. You simply have to define a list of docker container names which are expected to r
+un. If these docker containers are not running an e-mail will be send to a specified e-mail address with further 
+information. To automate the monitoring simply create a cron job and run the `simple-dm` command.
 
 ## Install & Usage
 1) Clone this repo, cd into the directory and run `go install`
@@ -30,15 +30,18 @@ containers:                           # list of containers to monitor
 ```
 An example configuration is provided above. 
 
-If you want to use Gmail as your e-mail provider you need to enable
-support for "[less secure apps](https://support.google.com/accounts/answer/6010255)". **Hint**: you might create a 
-new Gmail account and use it only for _SimpleDockerMonitoring_ or use another e-mail provider.
-
 For security aspects you can specify an environment variable which contains the e-mail password. The name of the 
 environment variable can be defined in `email.passwordenv`. If `email.passwordenv` is not null (`""`) the specified 
 environment variable will be used.
 
+
+If you want to use Gmail as your e-mail provider you need to enable
+support for "[less secure apps](https://support.google.com/accounts/answer/6010255)". 
+
+**Hint**: you might create a 
+new Gmail account and use it only for _SimpleDockerMonitoring_ or use another e-mail provider.
+
 ## Other
 * This is my first go project and I am thankful for improvements :)
-* On error `simple-dm` will write an error message to the console and exit with a unique code > 0.
+* On error `simple-dm` will write an error message to the console and exit with an unique code > 0.
 * `simple-dm` might need sudo privileges to communicate with the docker host
