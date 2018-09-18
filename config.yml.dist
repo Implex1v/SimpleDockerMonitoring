@@ -1,6 +1,7 @@
 enable: true
 email:
     enable: true
+    passwordenv: ""
     password: ""
     username: ""
     hostname : ""

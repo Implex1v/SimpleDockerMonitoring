@@ -22,13 +22,14 @@ type Config struct {
 
 // Email configuration structure
 type Email struct {
-	Enable    bool
-	Password  string
-	Username  string
-	Url       string
-	Sender    string
-	Recipient string
-	Hostname  string
+	Enable      bool
+	Password    string
+	Passwordenv string
+	Username    string
+	Url         string
+	Sender      string
+	Recipient   string
+	Hostname    string
 }
 
 // Load the config file into a Config struct object. If the config flag "-config" is not specified a default location
@@ -99,12 +100,21 @@ func remove(haystack []string, needle string) []string {
 
 // Sends a mail with the not running containers. The email information are taken from config.
 func SendMail(config Config, missingContainers []string) {
+	password := ""
+	fmt.Println("config.Email.PasswordEnv: "+config.Email.PasswordEnv)
+	if config.Email.PasswordEnv != "" {
+		password = os.Getenv(config.Email.PasswordEnv)
+		fmt.Println("env: "+password)
+	} else {
+		password = config.Email.Password
+	}
+
 	text := "Some of your Docker containers might not be running:\n" + strings.Join(missingContainers, "\n")
 	msg := []byte("To: " + config.Email.Recipient + "\r\n" +
 		"Subject: SimpleDockerMonitoring warning!\r\n" +
 		"\r\n" + text)
 
-	auth := smtp.PlainAuth("", config.Email.Username, config.Email.Password, config.Email.Hostname)
+	auth := smtp.PlainAuth("", config.Email.Username, password, config.Email.Hostname)
 	err := smtp.SendMail(config.Email.Url, auth, config.Email.Sender, []string{config.Email.Recipient}, msg)
 	if err != nil {
 		fmt.Println("Cloud not send mail. " + err.Error())
@@ -116,7 +126,7 @@ func SendMail(config Config, missingContainers []string) {
 
 func main() {
 	gopath := os.Getenv("GOPATH")
-	configPtr := flag.String("config", gopath+"/src/de.implex1v/simple-dm/config.yml", "The path to the config file")
+	configPtr := flag.String("config", gopath+"/src/implex1v.de/simple-dm/config.yml", "The path to the config file")
 	flag.Parse()
 
 	c := LoadConfig(configPtr)

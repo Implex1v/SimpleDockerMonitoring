@@ -17,6 +17,7 @@ enable: true                          # enables SimpleDockerMonitoring
 email:
   enable: true                        # enables e-mail support
   username: "example@gmail.com"       # your username 
+  passwordenv: "SDM_MAIL_PASSWORD"    # use the env var instead of email.password
   password: "p@ssw0rd"                # your password
   hostname : "smtp.gmail.com"         # the hostname of the smtp server
   url: "smtp.gmail.com:587"           # the url to the smtp server with port
@@ -33,6 +34,9 @@ If you want to use Gmail as your e-mail provider you need to enable
 support for "[less secure apps](https://support.google.com/accounts/answer/6010255)". **Hint**: you might create a 
 new Gmail account and use it only for _SimpleDockerMonitoring_ or use another e-mail provider.
 
+For security aspects you can specify an environment variable which contains the e-mail password. The name of the 
+environment variable can be defined in `email.passwordenv`. If `email.passwordenv` is not null (`""`) the specified 
+environment variable will be used.
 
 ## Other
 * This is my first go project and I am thankful for improvements :)
