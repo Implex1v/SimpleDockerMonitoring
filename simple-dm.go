@@ -34,11 +34,7 @@ type Email struct {
 // Load the config file into a Config struct object. If the config flag "-config" is not specified a default location
 // will be used which is equivalent "$GOPATH/src/de.implex1v/simple-dm/config.yml". This function will write a message
 // on error and exist with a code > 0.
-func LoadConfig() Config {
-	gopath := os.Getenv("GOPATH")
-	configPtr := flag.String("config", gopath+"/src/de.implex1v/simple-dm/config.yml", "The path to the config file")
-	flag.Parse()
-
+func LoadConfig(configPtr *string) Config {
 	bytes, err := ioutil.ReadFile(*configPtr)
 	if err != nil {
 		fmt.Println("Specified config file or default config file is not existing or not readable")
@@ -86,7 +82,7 @@ func CheckContainers(config Config, containers []types.Container) []string {
 	return notFoundContainers
 }
 
-// Removes needle from haystack if needle is in haystack
+// Removes the first needle from haystack if needle is in haystack
 func remove(haystack []string, needle string) []string {
 	if needle[0] == '/' {
 		needle = needle[1:]
@@ -119,7 +115,11 @@ func SendMail(config Config, missingContainers []string) {
 }
 
 func main() {
-	c := LoadConfig()
+	gopath := os.Getenv("GOPATH")
+	configPtr := flag.String("config", gopath+"/src/de.implex1v/simple-dm/config.yml", "The path to the config file")
+	flag.Parse()
+
+	c := LoadConfig(configPtr)
 	if c.Enable == false {
 		os.Exit(0)
 	}

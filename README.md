@@ -30,7 +30,7 @@ containers:                           # list of containers to monitor
 An example configuration is provided above. 
 
 If you want to use Gmail as your e-mail provider you need to enable
-support for "[less secure apps](https://support.google.com/accounts/answer/6010255?hl=de)". **Hint**: you might create a 
+support for "[less secure apps](https://support.google.com/accounts/answer/6010255)". **Hint**: you might create a 
 new Gmail account and use it only for _SimpleDockerMonitoring_ or use another e-mail provider.
 
 
